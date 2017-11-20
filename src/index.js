@@ -6,6 +6,7 @@ import './index.css';
 const ROW = 10;
 const COL = 10;
 const WIN_CONDITION = 5;
+let winnerMark = Array(ROW*COL).fill(null);
 
 function Square(props) {
   return (
@@ -21,8 +22,13 @@ class Board extends React.Component {
     var style = {};
     if(isBold)
     { 
-      style = {backgroundColor: "#ffde00"};
-    };
+      style = {backgroundColor: "#ff3300"};
+    }else{
+      if(winnerMark[i]===true)
+      {
+        style = {backgroundColor: "#ffde00"};
+      }
+    }
 
     return (
       <Square
@@ -86,7 +92,6 @@ class Game extends React.Component {
       ],
       stepNumber: 0,
       historyClicked: [],
-      winnerMark: Array(ROW*COL).fill(null),
       xIsNext: true
     };
   }
@@ -152,7 +157,7 @@ class Game extends React.Component {
     if(clickedSquare === -1){
       return null;
     }
-
+    console.log('winnerMark: ' + winnerMark);
     const checkValue = isX ? 'X' : 'O';
 
     var numberOfSameSquares = 0;
@@ -176,9 +181,7 @@ class Game extends React.Component {
         }
       }
       if(numberOfSameSquares === WIN_CONDITION){
-        // this.setState({
-        //   winnerMark: winnerMarkTemp
-        // })
+          winnerMark = winnerMarkTemp;
         return checkValue;
       }
     }
@@ -199,9 +202,7 @@ class Game extends React.Component {
         }
       }
       if(numberOfSameSquares === WIN_CONDITION){
-        // this.setState({
-        //   winnerMark: winnerMarkTemp
-        // })
+        winnerMark = winnerMarkTemp;
         return checkValue;
       }
   }
@@ -218,8 +219,8 @@ class Game extends React.Component {
 
       if(squares[cordToNum(i,currColTemp)] === checkValue){
         numberOfSameSquares++;
-        currColTemp++;
         winnerMarkTemp[cordToNum(i,currColTemp)] = true;
+        currColTemp++;
       }
       else{
         break;
@@ -227,9 +228,7 @@ class Game extends React.Component {
     }
     currCol++;
     if(numberOfSameSquares === WIN_CONDITION){
-      // this.setState({
-      //   winnerMark: winnerMarkTemp
-      // })
+      winnerMark = winnerMarkTemp;
       return checkValue;
     }
   }
@@ -246,8 +245,8 @@ class Game extends React.Component {
  
        if(squares[cordToNum(i,currColTemp)] === checkValue){
          numberOfSameSquares++;
-         currColTemp--;
          winnerMarkTemp[cordToNum(i,currColTemp)] = true;
+         currColTemp--;
        }
        else{
          break;
@@ -255,9 +254,7 @@ class Game extends React.Component {
      }
      currCol--;
      if(numberOfSameSquares === WIN_CONDITION){
-       // this.setState({
-       //   winnerMark: winnerMarkTemp
-       // })
+        winnerMark = winnerMarkTemp;
        return checkValue;
      }
    }

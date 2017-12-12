@@ -1,12 +1,88 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
+
+import {render} from 'react-dom';
+import {Provider} from 'react-redux';
+import {createStore} from 'redux';
+import {connect} from 'react-redux';
+
 import './index.css';
+
+const SORT_HISTORY = 'SORT_HISTORY'
+const CLICK_SQUARE = 'CLICK_SQUARE'
+const JUMP_TO = 'JUMP_TO'
 
 const ROW = 10;
 const COL = 10;
 const WIN_CONDITION = 5;
 let winnerMark = Array(ROW * COL).fill(null);
 
+const defaultState = {
+  history: [
+    {
+      squares: Array(ROW * COL).fill(null)
+    }
+  ],
+  stepNumber: 0,
+  historyClicked: [],
+  xIsNext: true,
+  isHistoryAscen: true
+}
+
+const reducer = (state = defaultState, action) => {
+
+  switch (action.type) {
+
+    case SORT_HISTORY:
+      return Object.assign({}, state, {
+        isHistoryAscen: !state.isHistoryAscen,
+      });
+
+    case CLICK_SQUARE:
+      //console.log('CLICK_SQUARE action.value = ' + action.value);
+      return Object.assign({}, state, {
+        history: action.history,
+        stepNumber: action.stepNumber,
+        historyClicked: action.historyClicked,
+        xIsNext: action.xIsNext
+      });
+    case JUMP_TO:
+      return Object.assign({}, state, {
+        stepNumber: action.stepNumber,
+        xIsNext: action.xIsNext
+      });
+    
+    default:
+      return state;
+  }
+}
+
+const store = createStore(reducer);
+
+// console.log('store.getState().isHistoryAscen = ' + store.getState().isHistoryAscen);
+// store.dispatch({type: SORT_HISTORY});
+// console.log(store.getState());
+
+// ==============================================================================
+function mapStateToProps(state) {
+  return state;
+}
+
+// ==============================================================================
+
+
+
+// class App extends React.Component {
+//   render() {
+//     return (
+//       <Provider store={store}>
+//         <Game/>
+//       </Provider>
+//     )
+//   }
+// } 
+
+// =============================================================================
 function Square(props) {
   return (
     <button className="square" onClick={props.onClick} style ={props.pStyle}>
@@ -15,6 +91,11 @@ function Square(props) {
   );
 }
 
+// ==============================================================================
+
+
+
+// =============================================================================
 class Board extends React.Component {
   renderSquare(i, isBold = false) {
 
@@ -75,33 +156,35 @@ class Board extends React.Component {
   }
 }
 
+// ==============================================================================
+
+
+
+
+// =============================================================================
 class Game extends React.Component {
-  constructor() {
-    super();
-    this.state = {
-      history: [
-        {
-          squares: Array(ROW * COL).fill(null)
-        }
-      ],
-      stepNumber: 0,
-      historyClicked: [],
-      xIsNext: true,
-      isHistoryAscen: true,
-    };
-  }
 
   render() {
-    let history = this.state.history.slice(0);
-    let historyClicked = this.state.historyClicked.slice(0);
-    if(!this.state.isHistoryAscen){ 
+    let history = this
+      .props
+      .history
+      .slice(0);
+    let historyClicked = this
+      .props
+      .historyClicked
+      .slice(0);
+      
+    console.log(this.props.isHistoryAscen);
+    if (!this.props.isHistoryAscen) {
       history = history.reverse();
     }
-    const current = this.state.history[this.state.stepNumber];
-    const winner = this.calculateWinner(current.squares, historyClicked[historyClicked.length - 1], !this.state.xIsNext);
+    const current = this.props.history[this.props.stepNumber];
+    const winner = this.calculateWinner(current.squares, historyClicked[historyClicked.length - 1], !this.props.xIsNext);
 
     const moves = history.map((step, move) => {
-      move = this.state.isHistoryAscen ? move : history.length - 1 - move
+      move = this.props.isHistoryAscen
+        ? move
+        : history.length - 1 - move
       let rowAndCol = '';
       try
       {
@@ -125,7 +208,7 @@ class Game extends React.Component {
     if (winner) {
       status = "Winner: " + winner;
     } else {
-      status = "Next player: " + (this.state.xIsNext
+      status = "Next player: " + (this.props.xIsNext
         ? "X"
         : "O");
     }
@@ -134,15 +217,17 @@ class Game extends React.Component {
       <div className="game">
         <div className="game-board">
           <Board
-            historyClicked={this.state.historyClicked}
-            step={this.state.stepNumber}
+            historyClicked={this.props.historyClicked}
+            step={this.props.stepNumber}
             squares={current.squares}
             onClick={i => this.handleClick(i)}/>
         </div>
         <div className="game-info">
           <div>{status}</div>
           <ul>
-            <li><button onClick={() => this.sortHistory()}>History sort</button></li>
+            <li>
+              <button onClick={() => this.sortHistory()}>History sort</button>
+            </li>
           </ul>
           <ol>{moves}</ol>
         </div>
@@ -152,24 +237,24 @@ class Game extends React.Component {
 
   handleClick(i) {
     const history = this
-      .state
+      .props
       .history
-      .slice(0, this.state.stepNumber + 1);
+      .slice(0, this.props.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current
       .squares
       .slice();
     try {
-      // console.log(this.state.historyClicked[this.state.historyClicked.length-1] +
-      // '==' + this.state.xIsNext);
-      if (this.calculateWinner(squares, this.state.historyClicked[this.state.historyClicked.length - 1], !this.state.xIsNext) || squares[i]) {
+      // console.log(this.props.historyClicked[this.props.historyClicked.length-1] +
+      // '==' + this.props.xIsNext);
+      if (this.calculateWinner(squares, this.props.historyClicked[this.props.historyClicked.length - 1], !this.props.xIsNext) || squares[i]) {
         return;
       }
     } catch (err) {
-      console.log('this.state.historyClicked is currently empty(may be you have just begin the game' +
+      console.log('this.props.historyClicked is currently empty(may be you have just begin the game' +
           ')');
     }
-    squares[i] = this.state.xIsNext
+    squares[i] = this.props.xIsNext
       ? "X"
       : "O";
 
@@ -180,34 +265,32 @@ class Game extends React.Component {
         squares: squares
       }
     ]);
-    let newHistoryClicked = this.state.historyClicked;
-    if (newHistoryClicked.length - 1 > this.state.stepNumber) {
-      newHistoryClicked = newHistoryClicked.slice(0, this.state.stepNumber);
+    let newHistoryClicked = this.props.historyClicked;
+    if (newHistoryClicked.length - 1 > this.props.stepNumber) {
+      newHistoryClicked = newHistoryClicked.slice(0, this.props.stepNumber);
     };
     newHistoryClicked.push(i);
 
-    this.setState({
+    this.props.dispatch({type: CLICK_SQUARE, 
+      value: i,
       history: newHistory,
       stepNumber: history.length,
       historyClicked: newHistoryClicked,
-      xIsNext: !this.state.xIsNext
-    }, function () {
-
-      // console.log(newHistory); console.log(this.state.historyClicked);
+      xIsNext: !this.props.xIsNext
     });
-    //console.log(this.state.stepNumber + "--" + this.state.historyClicked);
   }
 
-  sortHistory(){
-    this.setState({
-      isHistoryAscen: !this.state.isHistoryAscen
-    },
-    ()=>{
-      console.log(this.state.isHistoryAscen);
-    });
+  sortHistory() {
+    this.props.dispatch({type: SORT_HISTORY});
+    // this.setState({
+    //   isHistoryAscen: !this.props.isHistoryAscen
+    // }, () => {
+    //   console.log(this.props.isHistoryAscen);
+    // });
   }
   jumpTo(step) {
-    this.setState({
+    
+    this.props.dispatch({type: JUMP_TO, 
       stepNumber: step,
       xIsNext: (step % 2) === 0
     });
@@ -320,10 +403,6 @@ class Game extends React.Component {
   }
 }
 
-// ========================================
-
-ReactDOM.render(
-  <Game/>, document.getElementById("root"));
 
 function numToCol(num) {
   return (num - 1) % COL;
@@ -387,3 +466,13 @@ function rightLeftCrossCord(num) {
 
   return result;
 }
+
+
+
+// ==============================================================================
+
+
+let ConnectedApp  = connect(mapStateToProps)(Game);
+ReactDOM.render(<Provider store={store}><ConnectedApp /></Provider>, document.getElementById("root"));
+
+// ==============================================================================
